@@ -2,6 +2,7 @@ package org.dieschnittstelle.ess.basics;
 
 
 import org.dieschnittstelle.ess.basics.annotations.AnnotatedStockItemBuilder;
+import org.dieschnittstelle.ess.basics.annotations.DisplayAs;
 import org.dieschnittstelle.ess.basics.annotations.StockItemProxyImpl;
 
 import java.lang.reflect.InvocationTargetException;
@@ -42,6 +43,7 @@ public class ShowAnnotations {
             var fieldName = field.getName();
             var accessorName = getAccessorNameForField("get", fieldName);
             Method accessor;
+            // Prefer to handle each exception individually as that allows to easier pinpoint errors
 //			TODO handle accessor not existing by either skipping field or accessing it directly
             try {
                 accessor = class_.getMethod(accessorName);
@@ -66,9 +68,51 @@ public class ShowAnnotations {
         System.out.printf("{%s %s}%n", className, valuesList);
     }
 
-    /*
-     * TODO BAS2
-     */
+
+    private static void runBas3(Object instance) {
+        var class_ = instance.getClass();
+
+        var fields = class_.getDeclaredFields();
+        // Easiest tuple like value I could find is Map.Entry
+        var values = new ArrayList<Map.Entry<String, String>>();
+        for (var field : fields) {
+            var fieldName = field.getName();
+            var accessorName = getAccessorNameForField("get", fieldName);
+            Method accessor;
+            // Prefer to handle each exception individually as that allows to easier pinpoint errors
+//			TODO handle accessor not existing by either skipping field or accessing it directly
+            try {
+                accessor = class_.getMethod(accessorName);
+            } catch (NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            }
+
+            // Field annotation takes precedence over get accessor annotation
+            if (field.isAnnotationPresent(DisplayAs.class)) {
+                var annotation = field.getAnnotation(DisplayAs.class);
+                fieldName = annotation.value();
+            } else if (accessor.isAnnotationPresent(DisplayAs.class)) {
+                var annotation = accessor.getAnnotation(DisplayAs.class);
+                fieldName = annotation.value();
+            }
+
+            Object fieldValue;
+            try {
+                fieldValue = accessor.invoke(instance);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
+
+            values.add(new AbstractMap.SimpleEntry<>(fieldName, fieldValue.toString()));
+        }
+
+
+        var className = class_.getSimpleName();
+
+        var valuesList = values.stream().map(pair -> pair.getKey() + ":" + pair.getValue()).collect(Collectors.joining(", "));
+        System.out.printf("{%s %s}%n", className, valuesList);
+    }
+
     private static void showAttributes(Object instance) {
         show("class is: " + instance.getClass());
 
@@ -76,11 +120,7 @@ public class ShowAnnotations {
         try {
             runBas2(instance);
 
-            // TODO BAS3: if the new @DisplayAs annotation is present on a field,
-            //  the string representation will not use the field's name, but the name
-            //  specified in the the annotation. Regardless of @DisplayAs being present
-            //  or not, the field's value will be included in the string representation.
-
+            runBas3(instance);
         } catch (Exception error) {
             error.printStackTrace();
             throw new RuntimeException("showAnnotations(): exception occurred: " + error, error);
