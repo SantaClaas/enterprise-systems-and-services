@@ -3,6 +3,7 @@ package org.dieschnittstelle.ess.ser;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.http.HttpRequest;
 
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,6 +11,10 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import static org.dieschnittstelle.ess.utils.Utils.*;
 
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import org.apache.http.HttpResponse;
 import org.apache.logging.log4j.Logger;
 import org.dieschnittstelle.ess.entities.crm.AbstractTouchpoint;
 
@@ -97,6 +102,44 @@ public class TouchpointServiceServlet extends HttpServlet {
     /*
      * TODO: SER4 server-side implementation of deleteTouchpoint
      */
+    public void doDelete(HttpServletRequest request, HttpServletResponse response) {
+        logger.info("RECEIVED DELETE");
 
+        var path = request.getPathInfo();
+        var index = path.lastIndexOf("/");
+
+        // Id start index inclusive
+        var idStart = index + 1;
+        var isLastCharacter = idStart == path.length();
+        if (index == -1 || isLastCharacter) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+
+        var idParameter = path.substring(idStart);
+
+        logger.info("ID {}", idParameter);
+
+        long id;
+        try {
+            id = Long.parseLong(idParameter);
+        } catch (NumberFormatException error) {
+            logger.trace("Id parameter is not a valid long number format: {}", idParameter);
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+
+        var executor = (TouchpointCRUDExecutor) getServletContext()
+                .getAttribute("touchpointCRUD");
+
+        var isDeleted = executor.deleteTouchpoint(id);
+        if (!isDeleted) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+
+        // https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods/DELETE
+        response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+    }
 
 }

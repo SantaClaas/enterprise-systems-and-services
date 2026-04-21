@@ -5,10 +5,12 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
@@ -172,15 +174,32 @@ public class ShowTouchpointService {
     /**
      * TODO SER4
      *
-     * @param tp
+     * @param touchpoint
      */
-    public void deleteTouchpoint(AbstractTouchpoint tp) {
-        logger.info("deleteTouchpoint(): will delete: " + tp);
+    public void deleteTouchpoint(AbstractTouchpoint touchpoint) {
+        logger.info("deleteTouchpoint(): will delete: " + touchpoint);
 
         createClient();
 
         logger.debug("client running: {}", client.isRunning());
 
+        var request = new HttpDelete("http://localhost:8080/api/touchpoints/" + touchpoint.getId());
+        var execution = client.execute(request, null);
+
+
+        HttpResponse response;
+        try {
+            response = execution.get();
+        } catch (InterruptedException | ExecutionException exception) {
+            logger.error("got exception while executing touchpoint delete request: " + exception, exception);
+            throw new RuntimeException(exception);
+        }
+
+        logger.debug("RESPONSE {}", response);
+
+        var statusCode = response.getStatusLine().getStatusCode();
+        if (statusCode != HttpStatus.SC_NO_CONTENT)
+            throw new RuntimeException("Touchpoint delete was not successful. Expected status code 204 but status code was" + statusCode);
     }
 
     /**
