@@ -1,11 +1,15 @@
 package org.dieschnittstelle.ess.jrs;
 
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+import org.dieschnittstelle.ess.entities.erp.AbstractProduct;
 import org.dieschnittstelle.ess.entities.erp.IndividualisedProductItem;
+import org.eclipse.microprofile.openapi.annotations.Operation;
 
 import java.util.List;
 
 /*
- * UE JRS2: 
+ * UE JRS2:
  * deklarieren Sie hier Methoden fuer:
  * - die Erstellung eines Produkts
  * - das Auslesen aller Produkte
@@ -18,17 +22,33 @@ import java.util.List;
 /*
  * TODO JRS3: aendern Sie Argument- und Rueckgabetypen der Methoden von IndividualisedProductItem auf AbstractProduct
  */
+@Path("/products")
+@Consumes({MediaType.APPLICATION_JSON})
+@Produces({MediaType.APPLICATION_JSON})
 public interface IProductCRUDService {
 
-	public IndividualisedProductItem createProduct(IndividualisedProductItem prod);
+    @POST
+    @Operation(operationId = "createProduct")
+    public AbstractProduct createProduct(AbstractProduct product);
 
-	public List<IndividualisedProductItem> readAllProducts();
+    @GET
+    @Operation(operationId = "readAllProducts")
+    public List<AbstractProduct> readAllProducts();
 
-	public IndividualisedProductItem updateProduct(long id,
-												   IndividualisedProductItem update);
+    @PUT
+    @Path("/{id}")
+    @Operation(operationId = "updateProduct")
+    public AbstractProduct updateProduct(@PathParam("id") long id,
+                                         AbstractProduct update);
 
-	boolean deleteProduct(long id);
+    @DELETE
+    @Path("/{id}")
+    @Operation(operationId = "deleteProduct")
+    boolean deleteProduct(@PathParam("id") long id);
 
-	public IndividualisedProductItem readProduct(long id);
-			
+    @GET
+    @Path("/{id}")
+    @Operation(operationId = "readProduct")
+    public AbstractProduct readProduct(@PathParam("id") long id);
+
 }
