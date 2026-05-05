@@ -41,3 +41,6 @@ fabric.properties
 /.idea/artifacts/
 /.idea/libraries/
 /.idea/jarRepositories.xml
+
+# MacOS specific
+.DS_Store

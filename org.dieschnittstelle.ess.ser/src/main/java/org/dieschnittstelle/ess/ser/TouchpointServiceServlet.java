@@ -103,7 +103,7 @@ public class TouchpointServiceServlet extends HttpServlet {
      * TODO: SER4 server-side implementation of deleteTouchpoint
      */
     @Override
-    public void doDelete(HttpServletRequest request, HttpServletResponse response) {
+    protected void doDelete(HttpServletRequest request, HttpServletResponse response) {
         logger.info("RECEIVED DELETE");
 
         var path = request.getPathInfo();
