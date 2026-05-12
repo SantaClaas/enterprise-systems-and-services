@@ -95,7 +95,14 @@ public class JAXRSClientInterpreter implements InvocationHandler {
 
             if (isFirstArgumentPathParameter) {
                 // TODO: handle PathParam on the first argument - do not forget that in this case we might have a second argument providing a requestBodyData
+                var beforeLastParameter = url.lastIndexOf('/');
+                if (beforeLastParameter == -1)
+                    throw new IllegalArgumentException("URL does not contain path parameters");
+
+                url = url.substring(0, beforeLastParameter) + "/" + arguments[0];
                 // TODO: if we have a path param, we need to replace the corresponding pattern in the requestUrl with the parameter value
+                if (arguments.length > 1)
+                    requestBodyData = arguments[1];
             } else {
                 // if we do not have a path param, we assume the argument value will be sent via the body of the request
                 requestBodyData = arguments[0];
@@ -118,23 +125,20 @@ public class JAXRSClientInterpreter implements InvocationHandler {
             throw new IllegalArgumentException("Unsupported or no HTTP method annotation on method: " + method.getName() + ". Please use one of @GET, @POST, @PUT or @DELETE");
 
         // TODO: add a header on the request declaring that we accept json (for header names, you can use the constants declared in jakarta.ws.rs.core.HttpHeaders, for content types use the constants from jakarta.ws.rs.core.MediaType;)
-
-        // if we need to send the method argument in the request body we need to declare an entity
-        ByteArrayEntity requestBodyDataAsJson = null;
+        request.addHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON);
 
         // if a body shall be sent, convert the requestBodyData to json, create an entity from it and set it on the request
         if (requestBodyData != null) {
-
             // TODO: use a ByteArrayOutputStream for writing json
-
+            var stream = new ByteArrayOutputStream();
             // TODO: write the object to the stream using the jsonSerialiser
-
-            // TODO: create an ByteArrayEntity from the stream's content, assiging it to requestBodyDataAsJson
-
+            jsonSerialiser.writeObject(requestBodyData, stream);
+            // TODO: create an ByteArrayEntity from the stream's content, assigning it to requestBodyDataAsJson
+            var requestBodyDataAsJson = new ByteArrayEntity(stream.toByteArray());
             // TODO: set the entity on the request, which must be cast to HttpEntityEnclosingRequest
-
+            ((HttpEntityEnclosingRequest) request).setEntity(requestBodyDataAsJson);
             // TODO: and add a content type header for the request
-
+            request.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
         }
 
         logger.info("invoke(): executing request: " + request);
@@ -147,11 +151,11 @@ public class JAXRSClientInterpreter implements InvocationHandler {
         // check the response code
         if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK)
             throw new RuntimeException("Got unexpected status from server: " + response.getStatusLine());
-        
-        // TODO: convert the resonse body to a java object of an appropriate type considering the return type of the method as returned by getGenericReturnType() and set the object as value of returnValue
+
+        // TODO: convert the response body to a java object of an appropriate type considering the return type of the method as returned by getGenericReturnType() and set the object as value of returnValue
         var returnType = method.getGenericReturnType();
 
-        if (!returnType.getTypeName().equals("void")) {
+        if (returnType.getTypeName().equals("void")) {
             logger.info("invoke(): returning null as return value");
             return null;
         }
