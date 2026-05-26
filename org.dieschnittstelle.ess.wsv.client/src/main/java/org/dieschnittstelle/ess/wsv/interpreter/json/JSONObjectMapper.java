@@ -188,75 +188,88 @@ public class JSONObjectMapper {
 
         // TODO refactor this nested branching mess with early returns. If there is a return in the branch we don't need an else
         try {
-            if (json == null) {
+            if (json == null)
                 return null;
-            } else if (json instanceof NullNode) {
+
+            if (json instanceof NullNode)
                 return null;
-            } else if (json instanceof BooleanNode) {
-                return ((BooleanNode) json).booleanValue();
-            } else if (json instanceof NumericNode) {
+
+            if (json instanceof BooleanNode)
+                return json.booleanValue();
+
+
+            if (json instanceof NumericNode) {
                 if (type == Integer.TYPE) {
-                    return ((NumericNode) json).intValue();
-                } else if (type == Long.TYPE) {
-                    return ((NumericNode) json).longValue();
-                } else {
-                    return ((NumericNode) json).doubleValue();
+                    return json.intValue();
                 }
-            } else if (json instanceof TextNode) {
-                String text = ((TextNode) json).textValue();
+
+                if (type == Long.TYPE) {
+                    return json.longValue();
+                }
+
+                return json.doubleValue();
+            }
+
+            if (json instanceof TextNode) {
+                String text = json.textValue();
 
                 // so far we only support int, boolean and String fields
                 if (type == Integer.TYPE) {
                     return Integer.parseInt(text);
-                } else if (type == Boolean.TYPE) {
-                    return Boolean.parseBoolean(text);
+                }
 
-                } else if (type == Long.TYPE) {
+                if (type == Boolean.TYPE) {
+                    return Boolean.parseBoolean(text);
+                }
+
+                if (type == Long.TYPE) {
                     return Long.parseLong(text);
                 }
 
                 return text;
-            } else if (json instanceof ObjectNode) {
-                // in this case we do not foresee that we have generic types,
-                // hence we cast the type argument to class
+            }
 
-                // create a new instance of the class
-                Object obj = null;
-
+            if (json instanceof ObjectNode) {
                 // check whether we have an abstract class that has jsontype
                 // info present
                 if (Modifier.isAbstract(((Class) type).getModifiers())) {
                     // handle abstract classes by using the JsonTypeInfo annotation
                     Class<?> actualClass = (Class<?>) type;
                     JsonTypeInfo typeInfo = actualClass.getAnnotation(JsonTypeInfo.class);
-                    if (typeInfo != null) {
-                        // get the property name that contains the type information
-                        String typePropertyName = typeInfo.property();
-                        // look for the @class field in the json object
-                        JsonNode typeNode = ((ObjectNode) json).get(typePropertyName);
-                        if (typeNode != null) {
-                            String concreteClassName = typeNode.asText();
-                            logger.debug("found type information in json: " + concreteClassName);
-                            try {
-                                // try to load the concrete class
-                                Class<?> concreteClass = Class.forName(concreteClassName);
-                                // recursively call fromjson with the concrete class
-                                return fromjson(json, concreteClass);
-                            } catch (ClassNotFoundException e) {
-                                throw new ObjectMappingException(
-                                        "cannot find concrete class: " + concreteClassName + " - " + e.getMessage());
-                            }
-                        } else {
-                            throw new ObjectMappingException(
-                                    "cannot instantiate abstract class: " + type + " - no type information found in json");
-                        }
-                    } else {
+                    if (typeInfo == null) {
                         throw new ObjectMappingException(
                                 "cannot instantiate abstract class: " + type);
                     }
-                } else {
-                    obj = ((Class) type).newInstance();
+
+                    // get the property name that contains the type information
+                    String typePropertyName = typeInfo.property();
+                    // look for the @class field in the json object
+                    JsonNode typeNode = json.get(typePropertyName);
+                    if (typeNode == null) {
+                        throw new ObjectMappingException(
+                                "cannot instantiate abstract class: " + type + " - no type information found in json");
+                    }
+
+                    String concreteClassName = typeNode.asText();
+                    logger.debug("found type information in json: " + concreteClassName);
+                    try {
+                        // try to load the concrete class
+                        Class<?> concreteClass = Class.forName(concreteClassName);
+                        // recursively call fromjson with the concrete class
+                        return fromjson(json, concreteClass);
+                    } catch (ClassNotFoundException e) {
+                        throw new ObjectMappingException(
+                                "cannot find concrete class: " + concreteClassName + " - " + e.getMessage());
+                    }
                 }
+
+
+                // in this case we do not foresee that we have generic types,
+                // hence we cast the type argument to class
+
+                // create a new instance of the class
+                Object object = ((Class) type).newInstance();
+
 
                 // iterate over the fields in the json object and invoke the
                 // corresponding setter on the instance
@@ -265,80 +278,82 @@ public class JSONObjectMapper {
                     String currentJsonField = it.next();
 
                     // we exclude the meta field @class here
-                    if (!currentJsonField.startsWith("@")) {
+                    if (currentJsonField.startsWith("@")) {
+                        return object;
+                    }
 
-                        String capitalisedFieldname = currentJsonField
-                                .substring(0, 1).toUpperCase()
-                                + currentJsonField.substring(1);
-                        // get the getter and determine its return type
-                        Method currentBeanFieldGetter = ((Class) type)
-                                .getMethod("get" + capitalisedFieldname,
-                                        new Class[]{});
-                        Class currentBeanFieldClass = currentBeanFieldGetter
-                                .getReturnType();
+                    String capitalisedFieldname = currentJsonField
+                            .substring(0, 1).toUpperCase()
+                            + currentJsonField.substring(1);
+                    // get the getter and determine its return type
+                    Method currentBeanFieldGetter = ((Class) type)
+                            .getMethod("get" + capitalisedFieldname,
+                                    new Class[]{});
+                    Class currentBeanFieldClass = currentBeanFieldGetter
+                            .getReturnType();
 
-                        Object currentBeanFieldValue = fromjson(
-                                ((ObjectNode) json).get(currentJsonField),
-                                currentBeanFieldClass);
+                    Object currentBeanFieldValue = fromjson(
+                            ((ObjectNode) json).get(currentJsonField),
+                            currentBeanFieldClass);
 
-                        // we check whether we have an enumeration class!!!
-                        if (currentBeanFieldClass.isEnum()) {
-                            logger.debug("we have an enum value. need to convert it...");
-                            // lookup the valueof method
-                            Method valueOfMethod = currentBeanFieldClass
-                                    .getDeclaredMethod("valueOf",
-                                            new Class[]{String.class});
-                            currentBeanFieldValue = valueOfMethod.invoke(null,
-                                    currentBeanFieldValue);
-                        }
+                    // we check whether we have an enumeration class!!!
+                    if (currentBeanFieldClass.isEnum()) {
+                        logger.debug("we have an enum value. need to convert it...");
+                        // lookup the valueof method
+                        Method valueOfMethod = currentBeanFieldClass
+                                .getDeclaredMethod("valueOf",
+                                        new Class[]{String.class});
+                        currentBeanFieldValue = valueOfMethod.invoke(null,
+                                currentBeanFieldValue);
+                    }
 
-                        if (currentBeanFieldValue != null) {
+                    if (currentBeanFieldValue == null) {
+                        return object;
+                    }
 
-                            try {
-                                // invoke the setter method
-                                Method currentBeanFieldSetter = ((Class) type)
+                    try {
+                        // invoke the setter method
+                        Method currentBeanFieldSetter = ((Class) type)
+                                .getMethod(
+                                        "set" + capitalisedFieldname,
+                                        new Class[]{currentBeanFieldClass});
+
+                        logger.debug("will invoke setter "
+                                + currentBeanFieldSetter
+                                + " for value " + currentBeanFieldValue);
+
+                        currentBeanFieldSetter.invoke(object,
+                                currentBeanFieldValue);
+                    } catch (NoSuchMethodException e) {
+                        logger.debug("we got NoSuchMethodException: "
+                                + e
+                                + ". will check whether we have a collection typed attribute...");
+                        if (Collection.class
+                                .isAssignableFrom(currentBeanFieldClass)) {
+                            // check whether the value has more than one
+                            // element
+                            Iterator valueit = ((Collection) currentBeanFieldValue)
+                                    .iterator();
+                            if (valueit.hasNext()) {
+                                // determine the class of the element
+                                Object firstElement = valueit.next();
+                                // we will add element-by-element
+                                Method currentBeanFieldAdder = ((Class) type)
                                         .getMethod(
-                                                "set" + capitalisedFieldname,
-                                                new Class[]{currentBeanFieldClass});
-
-                                logger.debug("will invoke setter "
-                                        + currentBeanFieldSetter
-                                        + " for value " + currentBeanFieldValue);
-
-                                currentBeanFieldSetter.invoke(obj,
-                                        currentBeanFieldValue);
-                            } catch (NoSuchMethodException e) {
-                                logger.debug("we got NoSuchMethodException: "
-                                        + e
-                                        + ". will check whether we have a collection typed attribute...");
-                                if (Collection.class
-                                        .isAssignableFrom(currentBeanFieldClass)) {
-                                    // check whether the value has more than one
-                                    // element
-                                    Iterator valueit = ((Collection) currentBeanFieldValue)
-                                            .iterator();
-                                    if (valueit.hasNext()) {
-                                        // determine the class of the element
-                                        Object firstElement = valueit.next();
-                                        // we will add element-by-element
-                                        Method currentBeanFieldAdder = ((Class) type)
-                                                .getMethod(
-                                                        "add"
-                                                                + capitalisedFieldname
-                                                                .substring(
-                                                                        0,
-                                                                        capitalisedFieldname
-                                                                                .length() - 1),
-                                                        new Class[]{firstElement
-                                                                .getClass()});
-                                        // invoke the adder
-                                        currentBeanFieldAdder.invoke(obj,
-                                                firstElement);
-                                        while (valueit.hasNext()) {
-                                            currentBeanFieldAdder.invoke(obj,
-                                                    valueit.next());
-                                        }
-                                    }
+                                                "add"
+                                                        + capitalisedFieldname
+                                                        .substring(
+                                                                0,
+                                                                capitalisedFieldname
+                                                                        .length() - 1),
+                                                new Class[]{firstElement
+                                                        .getClass()});
+                                // invoke the adder
+                                currentBeanFieldAdder.invoke(object,
+                                        firstElement);
+                                while (valueit.hasNext()) {
+                                    currentBeanFieldAdder.invoke(object,
+                                            valueit.next());
                                 }
                             }
 
@@ -346,62 +361,61 @@ public class JSONObjectMapper {
                     }
                 }
 
-                return obj;
+                return object;
             }
+			
             // array handling is not really tested...
-            else if (json instanceof ArrayNode) {
-                Class concreteCollectionKlass;
-
-                logger.debug("we found an array node: " + json
-                        + "\n for class of type " + type);
-
-                Class collectionClass = type instanceof Class ? (Class) type
-                        : (Class) ((ParameterizedType) type).getRawType();
-
-                // if we have an abstract collection type, we will determine a
-                // specfic one to instantiate here
-                if (collectionClass == Collection.class
-                        || collectionClass == Set.class) {
-                    concreteCollectionKlass = HashSet.class;
-                } else if (collectionClass == List.class) {
-                    concreteCollectionKlass = ArrayList.class;
-                } else {
-                    concreteCollectionKlass = collectionClass;
-                }
-
-                // if we have an array node, klass must be a Collection class,
-                // i.e. instantiate it as such
-                Collection col = (Collection) concreteCollectionKlass
-                        .newInstance();
-                logger.debug("instantiated collection: " + col);
-
-                // if we have a parameterized type, the first parameter will
-                // tell us the type of the members of the collection
-                if (type instanceof ParameterizedType) {
-                    Type memberType = ((ParameterizedType) type)
-                            .getActualTypeArguments()[0];
-
-                    logger.debug("member type of collection is: " + memberType);
-
-                    for (Object item : (ArrayNode) json) {
-                        col.add(fromjson((JsonNode) item, memberType));
-                    }
-
-                } else {
-                    logger.warn("we have an array node, but do not know which type the members to convert to... use String as default...");
-
-                    for (Object item : (ArrayNode) json) {
-                        col.add(fromjson((JsonNode) item,
-                                String.class));
-                    }
-                }
-
-                return col;
-            } else {
+            if (!(json instanceof ArrayNode)) {
                 throw new ObjectMappingException("Cannot handle json node: "
                         + json);
             }
+            Class concreteCollectionKlass;
 
+            logger.debug("we found an array node: " + json
+                    + "\n for class of type " + type);
+
+            Class collectionClass = type instanceof Class ? (Class) type
+                    : (Class) ((ParameterizedType) type).getRawType();
+
+            // if we have an abstract collection type, we will determine a
+            // specfic one to instantiate here
+            if (collectionClass == Collection.class
+                    || collectionClass == Set.class) {
+                concreteCollectionKlass = HashSet.class;
+            } else if (collectionClass == List.class) {
+                concreteCollectionKlass = ArrayList.class;
+            } else {
+                concreteCollectionKlass = collectionClass;
+            }
+
+            // if we have an array node, klass must be a Collection class,
+            // i.e. instantiate it as such
+            Collection col = (Collection) concreteCollectionKlass
+                    .newInstance();
+            logger.debug("instantiated collection: " + col);
+
+            // if we have a parameterized type, the first parameter will
+            // tell us the type of the members of the collection
+            if (type instanceof ParameterizedType) {
+                Type memberType = ((ParameterizedType) type)
+                        .getActualTypeArguments()[0];
+
+                logger.debug("member type of collection is: " + memberType);
+
+                for (Object item : (ArrayNode) json) {
+                    col.add(fromjson((JsonNode) item, memberType));
+                }
+
+            } else {
+                logger.warn("we have an array node, but do not know which type the members to convert to... use String as default...");
+
+                for (Object item : (ArrayNode) json) {
+                    col.add(fromjson((JsonNode) item,
+                            String.class));
+                }
+            }
+
+            return col;
         } catch (ObjectMappingException e) {
             throw e;
         } catch (Exception e) {
