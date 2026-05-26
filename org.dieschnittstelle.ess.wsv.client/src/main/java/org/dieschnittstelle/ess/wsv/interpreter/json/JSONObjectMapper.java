@@ -23,9 +23,9 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import org.apache.logging.log4j.Logger;
 
 /**
- * 
+ *
  * CAUTION: THIS IS A RATHER QUICK&DIRTY SOLUTION... !!!
- * 
+ *
  */
 public class JSONObjectMapper {
 
@@ -44,7 +44,7 @@ public class JSONObjectMapper {
 
 	/**
 	 * obtain an instance of this class
-	 * 
+	 *
 	 * @return
 	 */
 	public static synchronized JSONObjectMapper getInstance() {
@@ -57,7 +57,7 @@ public class JSONObjectMapper {
 
 	/**
 	 * create a json node given some value (recursive)
-	 * 
+	 *
 	 * @param value
 	 * @return
 	 */
@@ -165,7 +165,7 @@ public class JSONObjectMapper {
 
 	/**
 	 * create an object from a json node
-	 * 
+	 *
 	 * @param json
 	 * @param type of object to be created - we assume that this is either a
 	 *        class or a parameterized type whose raw type is a class
@@ -214,10 +214,34 @@ public class JSONObjectMapper {
 				// check whether we have an abstract class that has jsontype
 				// info present
 				if (Modifier.isAbstract(((Class) type).getModifiers())) {
-					// TODO: include a handling for abstract classes considering
-					// the JsonTypeInfo annotation that might be set on type
-					throw new ObjectMappingException(
-							"cannot instantiate abstract class: " + type);
+					// handle abstract classes by using the JsonTypeInfo annotation
+					Class<?> actualClass = (Class<?>) type;
+					JsonTypeInfo typeInfo = actualClass.getAnnotation(JsonTypeInfo.class);
+					if (typeInfo != null) {
+						// get the property name that contains the type information
+						String typePropertyName = typeInfo.property();
+						// look for the @class field in the json object
+						JsonNode typeNode = ((ObjectNode) json).get(typePropertyName);
+						if (typeNode != null) {
+							String concreteClassName = typeNode.asText();
+							logger.debug("found type information in json: " + concreteClassName);
+							try {
+								// try to load the concrete class
+								Class<?> concreteClass = Class.forName(concreteClassName);
+								// recursively call fromjson with the concrete class
+								return fromjson(json, concreteClass);
+							} catch (ClassNotFoundException e) {
+								throw new ObjectMappingException(
+										"cannot find concrete class: " + concreteClassName + " - " + e.getMessage());
+							}
+						} else {
+							throw new ObjectMappingException(
+									"cannot instantiate abstract class: " + type + " - no type information found in json");
+						}
+					} else {
+						throw new ObjectMappingException(
+								"cannot instantiate abstract class: " + type);
+					}
 				} else {
 					obj = ((Class) type).newInstance();
 				}
