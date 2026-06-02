@@ -13,16 +13,16 @@ import org.dieschnittstelle.ess.entities.erp.Campaign;
 
 public interface ProductCRUD {
 
-	public AbstractProduct createProduct(AbstractProduct prod);
+    public AbstractProduct createProduct(AbstractProduct product);
 
-	public List<AbstractProduct> readAllProducts();
+    public List<AbstractProduct> readAllProducts();
 
-	public AbstractProduct updateProduct(AbstractProduct update);
+    public AbstractProduct updateProduct(AbstractProduct update);
 
-	public AbstractProduct readProduct(long productID);
+    public AbstractProduct readProduct(long productId);
 
-	public boolean deleteProduct(long productID);
+    public boolean deleteProduct(long productId);
 
-	public List<Campaign> getCampaignsForProduct(long productID);
+    public List<Campaign> getCampaignsForProduct(long productId);
 
 }

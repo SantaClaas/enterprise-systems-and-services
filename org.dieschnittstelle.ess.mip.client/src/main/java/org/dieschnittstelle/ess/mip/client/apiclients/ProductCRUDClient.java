@@ -9,50 +9,50 @@ import org.dieschnittstelle.ess.entities.erp.AbstractProduct;
 
 public class ProductCRUDClient implements ProductCRUD {
 
-	private ProductCRUD serviceProxy;
+    private ProductCRUD serviceProxy;
 
-	public ProductCRUDClient() throws Exception {
-		// TODO: obtain a proxy specifying the service interface. Let all subsequent methods use the proxy.
-//		this.serviceProxy = ServiceProxyFactory.getInstance().getProxy(null);
-	}
+    public ProductCRUDClient() throws Exception {
+        // TODONE: obtain a proxy specifying the service interface. Let all subsequent methods use the proxy.
+        this.serviceProxy = ServiceProxyFactory.getInstance().getProxy(null);
+    }
 
-	public AbstractProduct createProduct(AbstractProduct prod) {
+    public AbstractProduct createProduct(AbstractProduct product) {
 
-		// TODO: KOMMENTIEREN SIE DIE FOLGENDE ZUWEISUNG VON IDs UND DIE RETURN-ANWEISUNG AUS
-		prod.setId(Constants.nextId());
-		return prod;
+        // TODONE KOMMENTIEREN SIE DIE FOLGENDE ZUWEISUNG VON IDs UND DIE RETURN-ANWEISUNG AUS
+//        product.setId(Constants.nextId());
+//        return product;
 
-		// TODO: KOMMENTIEREN SIE DEN FOLGENDEN CODE, INKLUSIVE DER ID ZUWEISUNG, EIN
-//		AbstractProduct created = serviceProxy.createProduct(prod);
-//		// as a side-effect we set the id of the created product on the argument before returning
-//		prod.setId(created.getId());
-//		return created;
-	}
+        // TODONE: KOMMENTIEREN SIE DEN FOLGENDEN CODE, INKLUSIVE DER ID ZUWEISUNG, EIN
+        AbstractProduct created = serviceProxy.createProduct(product);
+        // as a side-effect we set the id of the created product on the argument before returning
+        product.setId(created.getId());
+        return created;
+    }
 
-	public List<AbstractProduct> readAllProducts() {
-//		return serviceProxy.readAllProducts();
-		return null;
-	}
+    public List<AbstractProduct> readAllProducts() {
+        return serviceProxy.readAllProducts();
+//        return null;
+    }
 
-	public AbstractProduct updateProduct(AbstractProduct update) {
-//		return serviceProxy.updateProduct(update);
-		return null;
-	}
+    public AbstractProduct updateProduct(AbstractProduct update) {
+        return serviceProxy.updateProduct(update);
+//        return null;/
+    }
 
-	public AbstractProduct readProduct(long productID) {
-//		return serviceProxy.readProduct(productID);
-		return null;
-	}
+    public AbstractProduct readProduct(long productId) {
+        return serviceProxy.readProduct(productId);
+//        return null;
+    }
 
-	public boolean deleteProduct(long productID) {
-//		return serviceProxy.deleteProduct(productID);
-		return false;
-	}
+    public boolean deleteProduct(long productId) {
+        return serviceProxy.deleteProduct(productId);
+//        return false;
+    }
 
-	@Override
-	public List<Campaign> getCampaignsForProduct(long productID) {
-//		return serviceProxy.getCampaignsForProduct(productID);
-		return null;
-	}
+    @Override
+    public List<Campaign> getCampaignsForProduct(long productId) {
+        return serviceProxy.getCampaignsForProduct(productId);
+//        return null;
+    }
 
 }
