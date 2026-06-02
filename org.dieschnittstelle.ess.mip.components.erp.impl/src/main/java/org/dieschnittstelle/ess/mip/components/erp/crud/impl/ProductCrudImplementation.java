@@ -1,8 +1,7 @@
-package org.dieschnittstelle.ess.mip.components.crm.crud.impl;
+package org.dieschnittstelle.ess.mip.components.erp.crud.impl;
 
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.logging.log4j.Logger;
 import org.dieschnittstelle.ess.entities.erp.AbstractProduct;
 import org.dieschnittstelle.ess.entities.erp.Campaign;
@@ -17,7 +16,7 @@ public class ProductCrudImplementation implements ProductCRUD {
 
     //TODO can I make this read-only
     @Inject
-    @EntityManagerProvider.CRMDataAccessor
+    @EntityManagerProvider.ERPDataAccessor
     private EntityManager entityManager;
 
     @Override
@@ -52,8 +51,8 @@ public class ProductCrudImplementation implements ProductCRUD {
 
     @Override
     public List<Campaign> getCampaignsForProduct(long productId) {
-       var query = entityManager.createQuery("SELECT DISTINCT campaign FROM Campaign JOIN campaign.bundles WHERE bundles.product.id = :productId", Campaign.class);
-       query.setParameter("productId", productId);
-       return query.getResultList();
+        var query = entityManager.createQuery("SELECT DISTINCT campaign FROM Campaign JOIN campaign.bundles WHERE bundles.product.id = :productId", Campaign.class);
+        query.setParameter("productId", productId);
+        return query.getResultList();
     }
 }

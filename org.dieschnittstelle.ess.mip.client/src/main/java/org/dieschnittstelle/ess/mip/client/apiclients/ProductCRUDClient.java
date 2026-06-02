@@ -13,7 +13,7 @@ public class ProductCRUDClient implements ProductCRUD {
 
     public ProductCRUDClient() throws Exception {
         // TODONE: obtain a proxy specifying the service interface. Let all subsequent methods use the proxy.
-        this.serviceProxy = ServiceProxyFactory.getInstance().getProxy(null);
+        this.serviceProxy = ServiceProxyFactory.getInstance().getProxy(ProductCRUD.class);
     }
 
     public AbstractProduct createProduct(AbstractProduct product) {
