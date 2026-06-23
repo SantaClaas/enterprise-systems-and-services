@@ -1,7 +1,9 @@
 package org.dieschnittstelle.ess.mip.components.erp.crud.impl;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import org.apache.logging.log4j.Logger;
 import org.dieschnittstelle.ess.entities.erp.AbstractProduct;
 import org.dieschnittstelle.ess.entities.erp.Campaign;
@@ -9,6 +11,8 @@ import org.dieschnittstelle.ess.mip.components.erp.crud.api.ProductCRUD;
 
 import java.util.List;
 
+@ApplicationScoped
+@Transactional
 public class ProductCrudImplementation implements ProductCRUD {
 
     private static Logger logger = org.apache.logging.log4j.LogManager

@@ -6,13 +6,17 @@
 		<!-- the specified datasource will be provided by the jpa-ds.xml file
 		     in WEB-INF that is part of the webapp component -->
 		<jta-data-source>java:/crm_erp_DS</jta-data-source>
-		<!-- Explizite Angabe von Klassen, die zur Persistence Unit gehoeren sollen, 
+		<!-- Explizite Angabe von Klassen, die zur Persistence Unit gehoeren sollen,
 			bzw. Angabe von jars, deren Klassen uebernommen werden sollen -->
 		<!-- <jar-file>lib/somejar.jar</jar-file> -->
 		<!-- <class>com.example.SomeClass</class> -->
 <!--		<jar-file></jar-file>-->
 		<!-- as we are using different PUs within a single deployment, we list the classes for each PU -->
 		<!-- TODO: new entity classes need to be added here! -->
+		<class>org.dieschnittstelle.ess.entities.erp.AbstractProduct</class>
+		<class>org.dieschnittstelle.ess.entities.erp.Campaign</class>
+		<class>org.dieschnittstelle.ess.entities.erp.IndividualisedProductItem</class>
+		<class>org.dieschnittstelle.ess.entities.erp.ProductBundle</class>
 		<class>org.dieschnittstelle.ess.entities.erp.PointOfSale</class>
 		<properties>
 			<!-- hibernate/wildfly automatic schema generation -->

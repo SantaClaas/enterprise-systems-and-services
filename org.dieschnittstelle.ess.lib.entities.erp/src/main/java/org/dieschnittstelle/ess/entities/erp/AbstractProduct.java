@@ -9,6 +9,7 @@ import org.dieschnittstelle.ess.utils.jsonb.JsonbJsonTypeInfoHandler;
 
 import jakarta.json.bind.annotation.JsonbTypeDeserializer;
 import jakarta.json.bind.annotation.JsonbTypeSerializer;
+import jakarta.persistence.*;
 
 import static org.dieschnittstelle.ess.utils.jsonb.JsonbJsonTypeInfoHandler.KLASSNAME_PROPERTY;
 
@@ -23,6 +24,9 @@ import static org.dieschnittstelle.ess.utils.jsonb.JsonbJsonTypeInfoHandler.KLAS
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = KLASSNAME_PROPERTY)
 @JsonbTypeDeserializer(JsonbJsonTypeInfoHandler.class)
 @JsonbTypeSerializer(JsonbJsonTypeInfoHandler.class)
+@Entity
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "product_type")
 public abstract class AbstractProduct implements Serializable, GenericCRUDEntity {
 
     protected static Logger logger = org.apache.logging.log4j.LogManager.getLogger(AbstractProduct.class);
@@ -32,6 +36,8 @@ public abstract class AbstractProduct implements Serializable, GenericCRUDEntity
      */
     private static final long serialVersionUID = 6940403029597060153L;
 
+    @Id
+    @GeneratedValue
     private long id;
 
     private String name;

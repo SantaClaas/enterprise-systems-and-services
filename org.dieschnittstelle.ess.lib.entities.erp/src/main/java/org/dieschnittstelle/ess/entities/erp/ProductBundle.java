@@ -7,17 +7,21 @@ import org.apache.logging.log4j.Logger;
 import jakarta.persistence.*;
 import java.io.Serializable;
 
+@Entity
 public class ProductBundle implements Serializable {
 
 	protected static Logger logger = org.apache.logging.log4j.LogManager.getLogger(ProductBundle.class);
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 1501911067906145681L;
 
+	@Id
+	@GeneratedValue
 	private long id;
 
+	@ManyToOne
 	private IndividualisedProductItem product;
 
 	private int units;

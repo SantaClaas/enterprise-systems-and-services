@@ -14,15 +14,18 @@ import jakarta.json.bind.annotation.JsonbTypeSerializer;
 import jakarta.persistence.*;
 
 //@JsonbTypeSerializer(JsonbJsonTypeInfoHandler.class)
+@Entity
+@DiscriminatorValue("CAMPAIGN")
 public class Campaign extends AbstractProduct implements Serializable {
 
 	protected static Logger logger = org.apache.logging.log4j.LogManager.getLogger(Campaign.class);
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 4407600000386810001L;
 
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<ProductBundle> bundles;
 
 	public Campaign() {
