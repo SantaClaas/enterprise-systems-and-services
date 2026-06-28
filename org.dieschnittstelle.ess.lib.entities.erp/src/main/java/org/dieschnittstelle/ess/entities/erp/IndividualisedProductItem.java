@@ -10,7 +10,7 @@ import jakarta.json.bind.annotation.JsonbTypeDeserializer;
 import jakarta.json.bind.annotation.JsonbTypeSerializer;
 import jakarta.persistence.*;
 
-//@JsonbTypeSerializer(JsonbJsonTypeInfoHandler.class)
+@JsonbTypeSerializer(JsonbJsonTypeInfoHandler.class)
 @Entity
 @DiscriminatorValue("INDIVIDUALISED_PRODUCT_ITEM")
 public class IndividualisedProductItem extends AbstractProduct implements Serializable {

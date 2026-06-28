@@ -18,6 +18,7 @@
 		<class>org.dieschnittstelle.ess.entities.erp.IndividualisedProductItem</class>
 		<class>org.dieschnittstelle.ess.entities.erp.ProductBundle</class>
 		<class>org.dieschnittstelle.ess.entities.erp.PointOfSale</class>
+		<class>org.dieschnittstelle.ess.entities.erp.StockItem</class>
 		<properties>
 			<!-- hibernate/wildfly automatic schema generation -->
 			<property name="hibernate.hbm2ddl.auto" value="create-drop" />

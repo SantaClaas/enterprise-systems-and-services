@@ -25,7 +25,7 @@ public interface StockSystemService {
     @Path("/points-of-sale/{pointOfSaleId}/products/{productId}/units")
     // Using post as recommended in exercise. I would redesign this in a real scenario.
     @POST
-    void addToStock(@PathParam("pointOfSaleId") long pointOfSaleId, @PathParam("productId") long productId, int units);
+    void addToStock(@PathParam("pointOfSaleId") long pointOfSaleId, @PathParam("productId") long productId, @QueryParam("units") int units);
 
     /**
      * removes some units of a product from the stock of a point of sale
@@ -34,21 +34,35 @@ public interface StockSystemService {
     @Path("/points-of-sale/{pointOfSaleId}/products/{productId}/units")
     // Using post as recommended in exercise. I would redesign this in a real scenario.
     @PATCH
-    void removeFromStock(@PathParam("pointOfSaleId") long pointOfSaleId, @PathParam("productId") long productId, int units);
+    void removeFromStock(@PathParam("pointOfSaleId") long pointOfSaleId, @PathParam("productId") long productId, @QueryParam("units") int units);
 
     /**
-     * returns all products on stock or, if pointOfSaleId is specified, the products for some pointOfSale
+     * returns all products on stock across all points of sale
+     */
+    @Path("/products")
+    @GET
+    List<IndividualisedProductItem> getAllProductsOnStock();
+
+    /**
+     * returns the products on stock for a specific point of sale
      */
     @Path("/points-of-sale/{pointOfSaleId}/products")
     @GET
     List<IndividualisedProductItem> getProductsOnStock(@PathParam("pointOfSaleId") long pointOfSaleId);
 
     /**
-     * returns the units on stock for a given product overall or, if a pointOfSaleId is specified, at some point of sale
+     * returns the units on stock for a given product at a specific point of sale
      */
     @Path("/products/{productId}/units/")
     @GET
     int getUnitsOnStock(@PathParam("productId") long productId, @QueryParam("pointOfSaleId") long pointOfSaleId);
+
+    /**
+     * returns the total units on stock for a given product across all points of sale
+     */
+    @Path("/products/{productId}/units/total")
+    @GET
+    int getTotalUnitsOnStock(@PathParam("productId") long productId);
 
     /**
      * returns the points of sale where some product is available
