@@ -55,7 +55,7 @@ public class ProductCrudImplementation implements ProductCRUD {
 
     @Override
     public List<Campaign> getCampaignsForProduct(long productId) {
-        var query = entityManager.createQuery("SELECT DISTINCT campaign FROM Campaign JOIN campaign.bundles WHERE bundles.product.id = :productId", Campaign.class);
+        var query = entityManager.createQuery("SELECT DISTINCT campaign FROM Campaign campaign JOIN campaign.bundles bundle WHERE bundle.product.id = :productId", Campaign.class);
         query.setParameter("productId", productId);
         return query.getResultList();
     }
