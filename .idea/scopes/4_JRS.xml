@@ -1,3 +1,0 @@
-<component name="DependencyValidationManager">
-  <scope name="4_JRS" pattern="file[group:0_SHARED]:*//*||file[group:4_JRS]:*//*||file[lib-entities-crm]:*/||file[lib-entities-erp]:*/||file[lib-utils]:*/||file[jrs-api]:*/||file[jrs-client]:*/||file[jrs-webapp]:*/" />
-</component>

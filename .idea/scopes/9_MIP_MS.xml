@@ -1,3 +1,0 @@
-<component name="DependencyValidationManager">
-  <scope name="9_MIP-MS" pattern="file[group:0_SHARED]:*//*||file[group:7_MIP+JPA+PAT]:*//*||file[group:9_MIP-MS]:*//*||file[lib-entities-crm]:*/||file[lib-entities-erp]:*/||file[lib-utils]:*/||file[mip-components-crm-api]:*/||file[mip-components-crm-impl]:*/||file[mip-components-erp-api]:*/||file[mip-components-erp-impl]:*/||file[mip-components-shopping-api]:*/||file[mip-components-shopping-impl]:*/||file[mip-ms-crm-app-tomee]:*/||file[mip-ms-erp-app-tomee]:*/||file[mip-ms-shared-webapp]:*/||file[mip-ms-shopping-app-tomee]:*/||file[mip-client]:*/" />
-</component>

@@ -1,3 +1,0 @@
-<component name="DependencyValidationManager">
-  <scope name="5_OPI" pattern="file[lib-entities-crm]:*/||file[lib-utils]:*/||file[jrs-webapp]:*/||file[opi-client]:*/" />
-</component>
