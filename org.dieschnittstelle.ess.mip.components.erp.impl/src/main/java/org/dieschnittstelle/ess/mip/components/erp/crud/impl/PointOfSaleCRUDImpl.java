@@ -43,6 +43,10 @@ public class PointOfSaleCRUDImpl implements PointOfSaleCRUD {
 		logger.info("createPointOfSale(): " + pos);
 
 		em.persist(pos);
+		// force the generated id to be assigned now, since the caller
+		// needs pos.getId() right away (e.g. to link it to a touchpoint)
+		// and it would otherwise stay 0 until the transaction commits
+		em.flush();
 
 		return pos;
 	}
