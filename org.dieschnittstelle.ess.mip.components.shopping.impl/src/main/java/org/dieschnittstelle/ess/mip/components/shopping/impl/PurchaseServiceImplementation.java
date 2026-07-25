@@ -11,11 +11,15 @@ import org.dieschnittstelle.ess.entities.crm.CustomerTransaction;
 import org.dieschnittstelle.ess.entities.crm.CustomerTransactionShoppingCartItem;
 import org.dieschnittstelle.ess.entities.erp.AbstractProduct;
 import org.dieschnittstelle.ess.entities.erp.Campaign;
+import org.dieschnittstelle.ess.entities.erp.IndividualisedProductItem;
+import org.dieschnittstelle.ess.entities.erp.ProductBundle;
 import org.dieschnittstelle.ess.entities.shopping.ShoppingCartItem;
 import org.dieschnittstelle.ess.mip.components.crm.api.CampaignTracking;
 import org.dieschnittstelle.ess.mip.components.crm.api.CustomerTracking;
 import org.dieschnittstelle.ess.mip.components.crm.api.TouchpointAccess;
 import org.dieschnittstelle.ess.mip.components.crm.crud.api.CustomerCRUD;
+import org.dieschnittstelle.ess.mip.components.erp.api.StockSystem;
+import org.dieschnittstelle.ess.mip.components.erp.crud.api.ProductCRUD;
 import org.dieschnittstelle.ess.mip.components.shopping.api.PurchaseService;
 import org.dieschnittstelle.ess.mip.components.shopping.api.ShoppingException;
 import org.dieschnittstelle.ess.mip.components.shopping.cart.api.ShoppingCart;
@@ -24,6 +28,8 @@ import org.dieschnittstelle.ess.mip.components.shopping.cart.impl.ShoppingCartEn
 import org.dieschnittstelle.ess.utils.interceptors.Logged;
 
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 @Transactional
@@ -51,6 +57,12 @@ public class PurchaseServiceImplementation implements PurchaseService {
 
     @Inject
     private ShoppingCartService shoppingCartService;
+
+    @Inject
+    private StockSystem stockSystem;
+
+    @Inject
+    private ProductCRUD productService;
 
 //    /**
 //     * the customer
@@ -109,7 +121,7 @@ public class PurchaseServiceImplementation implements PurchaseService {
         }
     }
 
-    public void purchase(Customer customer, AbstractTouchpoint touchpoint, ShoppingCart shoppingCart)  throws ShoppingException {
+    public void purchase(Customer customer, AbstractTouchpoint touchpoint, ShoppingCart shoppingCart) throws ShoppingException {
         logger.info("purchase()");
 
         if (customer == null || touchpoint == null) {
@@ -131,7 +143,7 @@ public class PurchaseServiceImplementation implements PurchaseService {
         List<ShoppingCartItem> productsInCart = shoppingCart.getItems();
         List<CustomerTransactionShoppingCartItem> productsInCartForTransaction = productsInCart
                 .stream()
-                .map(si -> new CustomerTransactionShoppingCartItem(si.getErpProductId(),si.getUnits(),si.isCampaign()))
+                .map(item -> new CustomerTransactionShoppingCartItem(item.getErpProductId(), item.getUnits(), item.isCampaign()))
                 .collect(Collectors.toList());
         CustomerTransaction transaction = new CustomerTransaction(customer, touchpoint,
                 productsInCartForTransaction);
@@ -144,30 +156,68 @@ public class PurchaseServiceImplementation implements PurchaseService {
     /*
      * TODO PAT2: complete the method implementation in your server-side component for shopping / purchasing
      */
-    private void checkAndRemoveProductsFromStock(ShoppingCart shoppingCart,AbstractTouchpoint touchpoint ) {
+    private void checkAndRemoveProductsFromStock(ShoppingCart shoppingCart, AbstractTouchpoint touchpoint) {
         logger.info("checkAndRemoveProductsFromStock");
 
         for (ShoppingCartItem item : shoppingCart.getItems()) {
 
             // TODO: ermitteln Sie das AbstractProduct für das gegebene ShoppingCartItem. Nutzen Sie dafür dessen erpProductId und die ProductCRUD bean
 
-            if (item.isCampaign()) {
-                this.campaignTracking.purchaseCampaignAtTouchpoint(item.getErpProductId(), touchpoint,
-                        item.getUnits());
-                // TODO: wenn Sie eine Kampagne haben, muessen Sie hier
-                // 1) ueber die ProductBundle Objekte auf dem Campaign Objekt iterieren, und
-                // 2) fuer jedes ProductBundle das betreffende Produkt in der auf dem Bundle angegebenen Anzahl, multipliziert mit dem Wert von
-                // item.getUnits() aus dem Warenkorb,
-                // - hinsichtlich Verfuegbarkeit ueberpruefen, und
-                // - falls verfuegbar, aus dem Warenlager entfernen - nutzen Sie dafür die StockSystem bean
-                // (Anm.: item.getUnits() gibt Ihnen Auskunft darüber, wie oft ein Produkt, im vorliegenden Fall eine Kampagne, im
-                // Warenkorb liegt)
-            } else {
-                // TODO: andernfalls (wenn keine Kampagne vorliegt) muessen Sie
-                // 1) das Produkt in der in item.getUnits() angegebenen Anzahl hinsichtlich Verfuegbarkeit ueberpruefen und
-                // 2) das Produkt, falls verfuegbar, in der entsprechenden Anzahl aus dem Warenlager entfernen
+            var productId = item.getErpProductId();
+            var product = this.productService.readProduct(productId);
+            var pointOfSaleId = touchpoint.getErpPointOfSaleId();
+
+            BiConsumer<Integer, IndividualisedProductItem> assertIsAvailable = (requiredUnits, individualProduct) -> {
+                var unitsOnStock = this.stockSystem.getUnitsOnStock(individualProduct, pointOfSaleId);
+
+                if (unitsOnStock >= requiredUnits) return;
+
+                // Undefined behavior on what should happen if it is not on stock so we assume we need to abort
+                throw new RuntimeException("Product " + productId + " is not available because there is not enough stock. This is undefined behavior");
+            };
+
+            BiFunction<Integer, IndividualisedProductItem, Boolean> isAvailable = (requiredUnits, individualProduct) -> {
+                var unitsOnStock = this.stockSystem.getUnitsOnStock(individualProduct, pointOfSaleId);
+
+                return unitsOnStock >= requiredUnits;
+            };
+
+            // Could abstract the stock check but it is
+            if (!item.isCampaign()) {
+                // TODO: andernfalls (wenn keine Kampagne vorliegt) müssen Sie
+                // 1) das Produkt in der in item.getUnits() angegebenen Anzahl hinsichtlich Verfügbarkeit überprüfen und
+                // Putting in a lot of trust here that this cast is correct
+                var individualProduct = (IndividualisedProductItem) product;
+
+                // 2) das Produkt, falls verfügbar, in der entsprechenden Anzahl aus dem Warenlager entfernen
+//                assertIsAvailable.accept(item.getUnits(), individualProduct);
+                if(!isAvailable.apply(item.getUnits(), individualProduct)) continue;
+
+                this.stockSystem.removeFromStock(individualProduct, pointOfSaleId, item.getUnits());
+                continue;
             }
 
+            this.campaignTracking.purchaseCampaignAtTouchpoint(item.getErpProductId(), touchpoint,
+                    item.getUnits());
+            // TODO: wenn Sie eine Kampagne haben, müssen Sie hier
+            // 1) über die ProductBundle Objekte auf dem Campaign Objekt iterieren, und
+            // Really putting a lot of faith into this cast
+            var campaign = (Campaign) product;
+            for (ProductBundle bundle : campaign.getBundles()) {
+                // 2) für jedes ProductBundle das betreffende Produkt in der auf dem Bundle angegebenen Anzahl, multipliziert mit dem Wert von
+                // item.getUnits() aus dem Warenkorb,
+                // - hinsichtlich Verfügbarkeit überprüfen, und
+                var units = bundle.getUnits() * item.getUnits();
+
+//                assertIsAvailable.accept(units, bundle.getProduct());
+                if(!isAvailable.apply(units, bundle.getProduct())) continue;
+
+                // - falls verfügbar, aus dem Warenlager entfernen - nutzen Sie dafür die StockSystem bean
+                stockSystem.removeFromStock(bundle.getProduct(), pointOfSaleId, units);
+
+                // (Anm.: item.getUnits() gibt Ihnen Auskunft darüber, wie oft ein Produkt, im vorliegenden Fall eine Kampagne, im
+                // Warenkorb liegt)
+            }
         }
     }
 
