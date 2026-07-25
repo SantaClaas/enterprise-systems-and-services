@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="war" name="ue-jsf5:war">
+    <output-path>$PROJECT_DIR$/org.dieschnittstelle.ess.ue.jsf5/target</output-path>
+    <root id="archive" name="org.dieschnittstelle.ess.ue.jsf5.war">
+      <element id="artifact" artifact-name="ue-jsf5:war exploded" />
+    </root>
+  </artifact>
+</component>

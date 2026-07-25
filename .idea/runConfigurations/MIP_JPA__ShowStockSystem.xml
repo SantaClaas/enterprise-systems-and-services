@@ -1,0 +1,15 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="MIP+JPA: ShowStockSystem" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="org.dieschnittstelle.ess.mip.client.demos.ShowStockSystem" />
+    <module name="mip-client" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="org.dieschnittstelle.ess.ejb.client.demos.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <method v="2">
+      <option name="Maven.BeforeRunTask" enabled="true" file="$PROJECT_DIR$/org.dieschnittstelle.ess.mip.client/pom.xml" goal="clean install" />
+    </method>
+  </configuration>
+</component>

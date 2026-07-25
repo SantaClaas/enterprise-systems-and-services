@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="war" name="jsf-cdi-webapp:war">
+    <output-path>$PROJECT_DIR$/org.dieschnittstelle.ess.jsf.cdi/target</output-path>
+    <root id="archive" name="org.dieschnittstelle.ess.jsf.cdi.war">
+      <element id="artifact" artifact-name="jsf-cdi-webapp:war exploded" />
+    </root>
+  </artifact>
+</component>

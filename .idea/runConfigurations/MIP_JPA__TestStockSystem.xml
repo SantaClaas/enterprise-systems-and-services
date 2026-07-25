@@ -1,0 +1,15 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="MIP+JPA: TestStockSystem" type="JUnit" factoryName="JUnit">
+    <module name="mip-client" />
+    <useClassPathOnly />
+    <option name="PACKAGE_NAME" value="org.dieschnittstelle.ess.mip.client.junit" />
+    <option name="MAIN_CLASS_NAME" value="org.dieschnittstelle.ess.mip.client.junit.TestStockSystem" />
+    <option name="METHOD_NAME" value="" />
+    <option name="TEST_OBJECT" value="class" />
+    <option name="PARAMETERS" value="" />
+    <option name="WORKING_DIRECTORY" value="$MODULE_DIR$" />
+    <method v="2">
+      <option name="Maven.BeforeRunTask" enabled="true" file="$PROJECT_DIR$/org.dieschnittstelle.ess.mip.client/pom.xml" goal="clean install" />
+    </method>
+  </configuration>
+</component>

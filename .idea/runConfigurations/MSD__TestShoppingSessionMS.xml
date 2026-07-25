@@ -1,0 +1,20 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="MSD: TestShoppingSessionMS" type="JUnit" factoryName="JUnit">
+    <module name="mip-client" />
+    <useClassPathOnly />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="org.dieschnittstelle.ess.mip.client.junit.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <option name="PACKAGE_NAME" value="org.dieschnittstelle.ess.mip.client.junit" />
+    <option name="MAIN_CLASS_NAME" value="org.dieschnittstelle.ess.mip.client.junit.TestShoppingSessionMS" />
+    <option name="METHOD_NAME" value="" />
+    <option name="TEST_OBJECT" value="class" />
+    <option name="PARAMETERS" value="" />
+    <method v="2">
+      <option name="Maven.BeforeRunTask" enabled="true" file="$PROJECT_DIR$/org.dieschnittstelle.ess.mip.client/pom.xml" goal="clean install" />
+    </method>
+  </configuration>
+</component>

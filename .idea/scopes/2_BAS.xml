@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="2_BAS" pattern="file[bas]:*/" />
+</component>
