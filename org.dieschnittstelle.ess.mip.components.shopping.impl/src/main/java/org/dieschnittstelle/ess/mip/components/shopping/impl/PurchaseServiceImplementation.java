@@ -11,14 +11,13 @@ import org.dieschnittstelle.ess.entities.crm.CustomerTransaction;
 import org.dieschnittstelle.ess.entities.crm.CustomerTransactionShoppingCartItem;
 import org.dieschnittstelle.ess.entities.erp.AbstractProduct;
 import org.dieschnittstelle.ess.entities.erp.Campaign;
-import org.dieschnittstelle.ess.entities.erp.IndividualisedProductItem;
 import org.dieschnittstelle.ess.entities.erp.ProductBundle;
 import org.dieschnittstelle.ess.entities.shopping.ShoppingCartItem;
 import org.dieschnittstelle.ess.mip.components.crm.api.CampaignTracking;
 import org.dieschnittstelle.ess.mip.components.crm.api.CustomerTracking;
 import org.dieschnittstelle.ess.mip.components.crm.api.TouchpointAccess;
 import org.dieschnittstelle.ess.mip.components.crm.crud.api.CustomerCRUD;
-import org.dieschnittstelle.ess.mip.components.erp.api.StockSystem;
+import org.dieschnittstelle.ess.mip.components.erp.api.StockSystemService;
 import org.dieschnittstelle.ess.mip.components.erp.crud.api.ProductCRUD;
 import org.dieschnittstelle.ess.mip.components.shopping.api.PurchaseService;
 import org.dieschnittstelle.ess.mip.components.shopping.api.ShoppingException;
@@ -28,7 +27,6 @@ import org.dieschnittstelle.ess.mip.components.shopping.cart.impl.ShoppingCartEn
 import org.dieschnittstelle.ess.utils.interceptors.Logged;
 
 import java.util.List;
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -59,7 +57,7 @@ public class PurchaseServiceImplementation implements PurchaseService {
     private ShoppingCartService shoppingCartService;
 
     @Inject
-    private StockSystem stockSystem;
+    private StockSystemService stockSystemService;
 
     @Inject
     private ProductCRUD productService;
@@ -167,39 +165,24 @@ public class PurchaseServiceImplementation implements PurchaseService {
             var product = this.productService.readProduct(productId);
             var pointOfSaleId = touchpoint.getErpPointOfSaleId();
 
-            BiConsumer<Integer, IndividualisedProductItem> assertIsAvailable = (requiredUnits, individualProduct) -> {
-                var unitsOnStock = this.stockSystem.getUnitsOnStock(individualProduct, pointOfSaleId);
-
-                if (unitsOnStock >= requiredUnits) return;
-
-                // Undefined behavior on what should happen if it is not on stock so we assume we need to abort
-                throw new RuntimeException("Product " + productId + " is not available because there is not enough stock. This is undefined behavior");
-            };
-
-            BiFunction<Integer, IndividualisedProductItem, Boolean> isAvailable = (requiredUnits, individualProduct) -> {
-                var unitsOnStock = this.stockSystem.getUnitsOnStock(individualProduct, pointOfSaleId);
+            BiFunction<Integer, Long, Boolean> isAvailable = (requiredUnits, checkedProductId) -> {
+                var unitsOnStock = this.stockSystemService.getUnitsOnStock(checkedProductId, pointOfSaleId);
 
                 return unitsOnStock >= requiredUnits;
             };
 
             // Could abstract the stock check but it is
             if (!item.isCampaign()) {
-                // TODO: andernfalls (wenn keine Kampagne vorliegt) müssen Sie
                 // 1) das Produkt in der in item.getUnits() angegebenen Anzahl hinsichtlich Verfügbarkeit überprüfen und
-                // Putting in a lot of trust here that this cast is correct
-                var individualProduct = (IndividualisedProductItem) product;
-
                 // 2) das Produkt, falls verfügbar, in der entsprechenden Anzahl aus dem Warenlager entfernen
-//                assertIsAvailable.accept(item.getUnits(), individualProduct);
-                if(!isAvailable.apply(item.getUnits(), individualProduct)) continue;
+                if (!isAvailable.apply(item.getUnits(), productId)) continue;
 
-                this.stockSystem.removeFromStock(individualProduct, pointOfSaleId, item.getUnits());
+                this.stockSystemService.removeFromStock(pointOfSaleId, productId, item.getUnits());
                 continue;
             }
 
             this.campaignTracking.purchaseCampaignAtTouchpoint(item.getErpProductId(), touchpoint,
                     item.getUnits());
-            // TODO: wenn Sie eine Kampagne haben, müssen Sie hier
             // 1) über die ProductBundle Objekte auf dem Campaign Objekt iterieren, und
             // Really putting a lot of faith into this cast
             var campaign = (Campaign) product;
@@ -208,12 +191,12 @@ public class PurchaseServiceImplementation implements PurchaseService {
                 // item.getUnits() aus dem Warenkorb,
                 // - hinsichtlich Verfügbarkeit überprüfen, und
                 var units = bundle.getUnits() * item.getUnits();
+                var bundleProductId = bundle.getProduct().getId();
 
-//                assertIsAvailable.accept(units, bundle.getProduct());
-                if(!isAvailable.apply(units, bundle.getProduct())) continue;
+                if (!isAvailable.apply(units, bundleProductId)) continue;
 
-                // - falls verfügbar, aus dem Warenlager entfernen - nutzen Sie dafür die StockSystem bean
-                stockSystem.removeFromStock(bundle.getProduct(), pointOfSaleId, units);
+                // - falls verfügbar, aus dem Warenlager entfernen - nutzen Sie dafür die StockSystemService bean
+                this.stockSystemService.removeFromStock(pointOfSaleId, bundleProductId, units);
 
                 // (Anm.: item.getUnits() gibt Ihnen Auskunft darüber, wie oft ein Produkt, im vorliegenden Fall eine Kampagne, im
                 // Warenkorb liegt)

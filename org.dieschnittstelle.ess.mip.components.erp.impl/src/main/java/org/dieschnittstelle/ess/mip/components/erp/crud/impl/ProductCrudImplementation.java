@@ -1,7 +1,10 @@
 package org.dieschnittstelle.ess.mip.components.erp.crud.impl;
 
+import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Alternative;
 import jakarta.inject.Inject;
+import jakarta.interceptor.Interceptor;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.apache.logging.log4j.Logger;
@@ -13,6 +16,11 @@ import java.util.List;
 
 @ApplicationScoped
 @Transactional
+/*
+ * Work around for priority conflict. Using higher priority. This deviates from the demo implementation that did not work for me
+ */
+@Alternative
+@Priority(Interceptor.Priority.APPLICATION+10)
 public class ProductCrudImplementation implements ProductCRUD {
 
     private static Logger logger = org.apache.logging.log4j.LogManager
