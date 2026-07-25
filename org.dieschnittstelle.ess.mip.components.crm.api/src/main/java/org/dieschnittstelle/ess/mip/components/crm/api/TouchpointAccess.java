@@ -15,6 +15,8 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 public interface TouchpointAccess {
 
 	@POST
+	// Avoid ambiguity with the createTouchpoint method in TouchpointCRUD
+	@Path("/pointofsales")
 	public AbstractTouchpoint createTouchpointAndPointOfSale(AbstractTouchpoint touchpoint) throws CrmException;
 
 	@GET
@@ -23,5 +25,5 @@ public interface TouchpointAccess {
 	@GET
 	@Path("/{id}")
 	public AbstractTouchpoint readTouchpoint(@PathParam("id") long id);
-	
+
 }

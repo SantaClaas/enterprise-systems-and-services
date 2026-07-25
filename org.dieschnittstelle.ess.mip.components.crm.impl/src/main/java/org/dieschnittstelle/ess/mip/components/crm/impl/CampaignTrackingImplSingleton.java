@@ -7,7 +7,10 @@ import java.util.Map;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Alternative;
+import jakarta.interceptor.Interceptor;
 
 import org.dieschnittstelle.ess.entities.crm.AbstractTouchpoint;
 import org.dieschnittstelle.ess.entities.crm.CampaignExecution;
@@ -20,6 +23,14 @@ import org.dieschnittstelle.ess.utils.interceptors.Logged;
  */
 @Logged
 @ApplicationScoped
+/*
+ * note in an all-in-one monolithic deployment the registered REST client
+ * conflicts with the interfaces actual bean implementation. For this
+ * reason, the implementation needs to be assigned a higher priority by
+ * using @Alternative and @Priority
+ */
+@Alternative
+@Priority(Interceptor.Priority.APPLICATION+10)
 public class CampaignTrackingImplSingleton implements CampaignTracking {
 
 	protected static Logger logger = org.apache.logging.log4j.LogManager.getLogger(CampaignTrackingImplSingleton.class);
